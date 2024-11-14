@@ -1,4 +1,3 @@
-using System;
 using InputSpace;
 using UnityEngine;
 
@@ -9,6 +8,8 @@ namespace PlayerSpace
         [Header("Movement")]
         [SerializeField] private float _playerSpeed;
         [SerializeField] private float _jumpForce = 5f;
+        [SerializeField] [Range(0.01f, 1f)] private float _freezeForce = 0.5f;
+        private float _currentFreeze;
         private InputController _inputController;
         internal Rigidbody2D _playerRigidbody;
         private Boundary _boundary;
@@ -36,21 +37,24 @@ namespace PlayerSpace
         {
             _playerRigidbody = GetComponent<Rigidbody2D>();
             _inputController = GetComponent<InputController>();
+            _currentFreeze = _freezeForce;
         }
 
         private void OnEnable()
         {
             _inputController.OnJump += Jump;
-            _inputController.OnAttack += Attack;
         }
         
         private void FixedUpdate()
         {
-            GroudColisionCheck();
+            GroundColisionCheck();
             isMoving = _playerRigidbody.linearVelocity.x != 0;
             Movement();
             Flip();
-            Debug.Log(_isGround);
+
+            Time.timeScale = _currentFreeze;
+            
+            _currentFreeze = _isGround ? 1f : _freezeForce;
         }
 
         private void Movement()
@@ -60,13 +64,11 @@ namespace PlayerSpace
         
         private void Flip()
         {
-            if ((_playerRigidbody.linearVelocity.x > 0 && _isFlip) || (_playerRigidbody.linearVelocity.x < 0 && !_isFlip))
-            {
-                _isFlip = !_isFlip;
-                transform.Rotate(0, 180, 0);
-            }
+            if ((!(_playerRigidbody.linearVelocity.x > 0) || !_isFlip) &&
+                (!(_playerRigidbody.linearVelocity.x < 0) || _isFlip)) return;
             
-            Debug.Log(_isFlip);
+            _isFlip = !_isFlip;
+            transform.Rotate(0, 180, 0);
         }
 
         private void Jump()
@@ -76,19 +78,13 @@ namespace PlayerSpace
                 _jumpCount = 2;
             }
 
-            if (_jumpCount > 0)
-            {
-                _playerRigidbody.linearVelocity = new Vector2(_playerRigidbody.linearVelocity.x, _jumpForce);
-                _jumpCount--;
-            }
+            if (_jumpCount <= 0) return;
+            
+            _playerRigidbody.linearVelocity = new Vector2(_playerRigidbody.linearVelocity.x, _jumpForce);
+            _jumpCount--;
         }
         
-        private void Attack()
-        {
-            throw new NotImplementedException();
-        }
-        
-        private void GroudColisionCheck()
+        private void GroundColisionCheck()
         {
             _isGround = Physics2D.OverlapCircle(_groundCheckTransform.position, _groundCheckRadius, _groundLayerMask);
         }
@@ -101,7 +97,6 @@ namespace PlayerSpace
         private void OnDisable()
         {
             _inputController.OnJump -= Jump;
-            _inputController.OnAttack -= Attack;
         }
     }
 }
