@@ -7,7 +7,6 @@ namespace InputSpace
 {
     public class InputController : MonoBehaviour
     {
-        public static InputController Instance { get; private set; }
         private PlayerMovement _playerMovement;
         private InputAction _move;
         private InputAction _jump;
@@ -18,7 +17,6 @@ namespace InputSpace
 
         private void Awake()
         {
-            Instance = this;
             _playerMovement = GetComponent<PlayerMovement>();
             _move = InputSystem.actions.FindAction("Move");
             _jump = InputSystem.actions.FindAction("Jump");
@@ -35,7 +33,6 @@ namespace InputSpace
         {
             Vector2 move = _move.ReadValue<Vector2>();
             _playerMovement.MoveInput = move;
-            Debug.Log(move);
         }
         
         private void Jump()
